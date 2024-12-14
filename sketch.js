@@ -3,7 +3,7 @@ let prevImage = null;
 let currentImage = null;
 
 let scaledWidth = 60; // Default downscaled image width
-let scaledHeight = 45; // Default downscaled image height
+let scaledHeight = 0.75 * scaledWidth; // Default downscaled image height
 const diameterAdj = 0.9;
 const backgroundColor = 0;
 const backgroundFader = 8;
@@ -278,8 +278,9 @@ function keyPressed() {
   if (key) {
     var dotFidelity = key;
     var minNumDots = 3;
-    scaledHeight = 3 * minNumDots * dotFidelity;
     scaledWidth = 4 * minNumDots * dotFidelity;
+    scaledHeight = 0.75 * scaledWidth;
+    
     reinitializeForNewResolution();
   }
 }
