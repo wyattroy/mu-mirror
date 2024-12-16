@@ -275,7 +275,7 @@ function easeInOutCubic(t) {
 
 function keyPressed() {
 
-  if (key) {
+  if (key >= '1' && key <= '9') {
     var dotFidelity = key;
     var minNumDots = 3;
     scaledWidth = 4 * minNumDots * dotFidelity;
