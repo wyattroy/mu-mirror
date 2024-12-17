@@ -2,8 +2,8 @@ let video;
 let prevImage = null;
 let currentImage = null;
 
-let scaledWidth = 60; // Default downscaled image width
-let scaledHeight = 0.75 * scaledWidth; // Default downscaled image height
+let scaledWidth = 60; // Default downscaled image width (landscape)
+let scaledHeight = 45; // Default downscaled image height (landscape)
 const diameterAdj = 0.9;
 const backgroundColor = 0;
 const backgroundFader = 8;
@@ -27,11 +27,27 @@ let firstTwoFramesCaptured = false;
 let timeOfFirstFrame = 0;
 
 function setup() {
-  createCanvasForCurrentResolution();
+  // Temporarily create a canvas; actual resizing will happen after we know the video orientation.
+  createCanvas(windowWidth, windowHeight);
+  
   video = createCapture(VIDEO, () => {
+    // Once the video is ready, check its orientation.
+    // At this point, video.width and video.height should be known.
+    if (video.height > video.width) {
+      // Portrait orientation: flip aspect ratio
+      scaledWidth = 45;
+      scaledHeight = 60;
+    } else {
+      // Landscape orientation (default)
+      scaledWidth = 60;
+      scaledHeight = 45;
+    }
+
+    video.size(scaledWidth, scaledHeight);
+    createCanvasForCurrentResolution();
     capturePhotoAsPrevImage();
   });
-  video.size(scaledWidth, scaledHeight);
+  
   video.hide();
   noStroke();
 }
@@ -84,11 +100,8 @@ function draw() {
 
       if (pixelProgress < 1) allDone = false; // Not done yet
 
-      let x =
-        lerp(p.startX, p.targetX, easedProgress) * pixelWidth + pixelWidth / 2;
-      let y =
-        lerp(p.startY, p.targetY, easedProgress) * pixelHeight +
-        pixelHeight / 2;
+      let x = lerp(p.startX, p.targetX, easedProgress) * pixelWidth + pixelWidth / 2;
+      let y = lerp(p.startY, p.targetY, easedProgress) * pixelHeight + pixelHeight / 2;
 
       let r = lerp(p.startColor[0], p.targetColor[0], easedProgress);
       let g = lerp(p.startColor[1], p.targetColor[1], easedProgress);
@@ -254,7 +267,22 @@ function drawImage(image, w, h) {
 }
 
 function windowResized() {
-  resizeCanvas(windowWidth, (windowWidth * scaledHeight) / scaledWidth);
+  // Recalculate canvas based on orientation
+  let aspectRatio = scaledWidth / scaledHeight;
+  
+  if (windowHeight > windowWidth) {
+    // Portrait: height > width
+    // Make canvas fill height, compute width from aspect ratio
+    let newCanvasHeight = windowHeight;
+    let newCanvasWidth = newCanvasHeight * aspectRatio;
+    resizeCanvas(newCanvasWidth, newCanvasHeight);
+  } else {
+    // Landscape
+    let newCanvasWidth = windowWidth;
+    let newCanvasHeight = newCanvasWidth / aspectRatio;
+    resizeCanvas(newCanvasWidth, newCanvasHeight);
+  }
+  
   if (transitionPixels.length === 0 && prevImage) {
     drawImage(prevImage, scaledWidth, scaledHeight);
   }
@@ -274,20 +302,27 @@ function easeInOutCubic(t) {
 }
 
 function keyPressed() {
-
   if (key >= '1' && key <= '9') {
     var dotFidelity = key;
     var minNumDots = 3;
+    scaledHeight = 3 * minNumDots * dotFidelity;
     scaledWidth = 4 * minNumDots * dotFidelity;
-    scaledHeight = 0.75 * scaledWidth;
-    
     reinitializeForNewResolution();
   }
 }
 
 function reinitializeForNewResolution() {
-  // Adjust the canvas size
-  resizeCanvas(windowWidth, (windowWidth * scaledHeight) / scaledWidth);
+  // Adjust the canvas size based on current orientation
+  let aspectRatio = scaledWidth / scaledHeight;
+  if (windowHeight > windowWidth) {
+    let newCanvasHeight = windowHeight;
+    let newCanvasWidth = newCanvasHeight * aspectRatio;
+    resizeCanvas(newCanvasWidth, newCanvasHeight);
+  } else {
+    let newCanvasWidth = windowWidth;
+    let newCanvasHeight = newCanvasWidth / aspectRatio;
+    resizeCanvas(newCanvasWidth, newCanvasHeight);
+  }
 
   // Reinitialize video capture at the new resolution
   video.size(scaledWidth, scaledHeight);
@@ -306,5 +341,16 @@ function reinitializeForNewResolution() {
 }
 
 function createCanvasForCurrentResolution() {
-  createCanvas(windowWidth, (windowWidth * scaledHeight) / scaledWidth);
+  let aspectRatio = scaledWidth / scaledHeight;
+  if (windowHeight > windowWidth) {
+    // Portrait orientation
+    let canvasHeight = windowHeight;
+    let canvasWidth = canvasHeight * aspectRatio;
+    createCanvas(canvasWidth, canvasHeight);
+  } else {
+    // Landscape orientation
+    let canvasWidth = windowWidth;
+    let canvasHeight = canvasWidth / aspectRatio;
+    createCanvas(canvasWidth, canvasHeight);
+  }
 }
